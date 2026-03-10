@@ -89,41 +89,80 @@ public class CheckerBoardPosition(byte x, byte y) : IParsable<CheckerBoardPositi
         }
     }
 
-    public class Program
-    {
-        public static void Main()
-        {
-            Console.WriteLine("Проверка шахматного хода");
-            Console.WriteLine("Фигуры: Ладья, Слон, Ферзь, Конь, Король\n");
+  using System;
 
-            // dвод фигуры
+public enum FigureType
+{
+    Пешка, Ладья, Слон, Ферзь, Конь, Король
+}
+
+public static class ChessRules
+{
+    public static bool IsValidMove(FigureType figure, CheckerBoardPosition from, CheckerBoardPosition to)
+    {
+        int dx = Math.Abs(from.X - to.X);
+        int dy = Math.Abs(from.Y - to.Y);
+
+        return figure switch
+        {
+            // Пешка: только вперёд на 1 (упрощённо, без взятия и цвета)
+            FigureType.Пешка => from.X == to.X && to.Y == from.Y + 1,
+            FigureType.Ладья => from.X == to.X || from.Y == to.Y,
+            FigureType.Слон => dx == dy,
+            FigureType.Ферзь => from.X == to.X || from.Y == to.Y || dx == dy,
+            FigureType.Конь => (dx == 1 && dy == 2) || (dx == 2 && dy == 1),
+            FigureType.Король => dx <= 1 && dy <= 1,
+            _ => false
+        };
+    }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        Console.WriteLine("Проверка шахматного хода");
+        Console.WriteLine("Фигуры: Пешка, Ладья, Слон, Ферзь, Конь, Король");
+        Console.WriteLine("Для выхода введите пустую строку или 'exit'.\n");
+
+        while (true)
+        {
+            // ввод фигуры
             Console.Write("Введите фигуру: ");
             string? input = Console.ReadLine()?.Trim();
+            if (string.IsNullOrEmpty(input) || input.Equals("exit", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("Выход из программы.");
+                break;
+            }
+
             if (!Enum.TryParse(input, true, out FigureType figure))
             {
-                Console.WriteLine("Неизвестная фигура!");
-                return;
+                Console.WriteLine("Неизвестная фигура! Попробуйте снова.\n");
+                continue;
             }
 
             // ввод начальной позиции
             Console.Write("Начальная позиция (например, E2): ");
-            if (!CheckerBoardPosition.TryParse(Console.ReadLine(), null, out var from))
+            string? fromInput = Console.ReadLine()?.Trim();
+            if (!CheckerBoardPosition.TryParse(fromInput, null, out var from))
             {
-                Console.WriteLine("Некорректная позиция!");
-                return;
+                Console.WriteLine("Некорректная позиция! Попробуйте снова.\n");
+                continue;
             }
 
-            //  конечная позиции
+            // ввод конечной позиции
             Console.Write("Конечная позиция (например, E4): ");
-            if (!CheckerBoardPosition.TryParse(Console.ReadLine(), null, out var to))
+            string? toInput = Console.ReadLine()?.Trim();
+            if (!CheckerBoardPosition.TryParse(toInput, null, out var to))
             {
-                Console.WriteLine("Некорректная позиция!");
-                return;
+                Console.WriteLine("Некорректная позиция! Попробуйте снова.\n");
+                continue;
             }
 
-            // Проверка хода
+            // проверка хода
             bool valid = ChessRules.IsValidMove(figure, from!, to!);
-            Console.WriteLine($"\nХод {figure} из {from} в {to} — {(valid ? "допустим" : "недопустим")}");
+            Console.WriteLine($"\nХод {figure} из {from} в {to} — {(valid ? "допустим" : "недопустим")}\n");
         }
     }
 }
